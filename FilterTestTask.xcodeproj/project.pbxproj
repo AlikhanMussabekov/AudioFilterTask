@@ -12,6 +12,7 @@
 		078A2B5628C4994B00D1AC41 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 078A2B5528C4994B00D1AC41 /* Assets.xcassets */; };
 		078A2B5928C4994B00D1AC41 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 078A2B5728C4994B00D1AC41 /* LaunchScreen.storyboard */; };
 		078A2B6128C505E300D1AC41 /* FilterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B6028C505E300D1AC41 /* FilterViewController.swift */; };
+		078A2B6328C55C9F00D1AC41 /* AssetExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B6228C55C9F00D1AC41 /* AssetExporter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		078A2B5828C4994B00D1AC41 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		078A2B5A28C4994B00D1AC41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		078A2B6028C505E300D1AC41 /* FilterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterViewController.swift; sourceTree = "<group>"; };
+		078A2B6228C55C9F00D1AC41 /* AssetExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetExporter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +59,7 @@
 				078A2B4C28C4994A00D1AC41 /* AppDelegate.swift */,
 				078A2B5028C4994A00D1AC41 /* MediaChooseController.swift */,
 				078A2B6028C505E300D1AC41 /* FilterViewController.swift */,
+				078A2B6228C55C9F00D1AC41 /* AssetExporter.swift */,
 				078A2B5528C4994B00D1AC41 /* Assets.xcassets */,
 				078A2B5728C4994B00D1AC41 /* LaunchScreen.storyboard */,
 				078A2B5A28C4994B00D1AC41 /* Info.plist */,
@@ -137,6 +140,7 @@
 				078A2B6128C505E300D1AC41 /* FilterViewController.swift in Sources */,
 				078A2B5128C4994A00D1AC41 /* MediaChooseController.swift in Sources */,
 				078A2B4D28C4994A00D1AC41 /* AppDelegate.swift in Sources */,
+				078A2B6328C55C9F00D1AC41 /* AssetExporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -5,9 +5,7 @@
 //  Created by A.Musabekov on 04.09.2022.
 //
 
-import Foundation
 import UIKit
-import AVFoundation
 import AVKit
 
 final class FilterViewController: UIViewController {
@@ -44,8 +42,8 @@ final class FilterViewController: UIViewController {
         self.slider.center = CGPoint(x: self.view.center.x, y: self.view.frame.maxY - self.view.safeAreaInsets.bottom - 40)
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
 
         self.slider.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
         self.slider.minimumValue = -2400
@@ -53,12 +51,6 @@ final class FilterViewController: UIViewController {
         self.slider.value = 0
         self.view.addSubview(self.slider)
 
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
-        } catch {
-            // report for an error
-            print(error)
-        }
 
         let initialVideoAsset = AVAsset(url: self.mediaURL)
         let range = CMTimeRange(start: .zero, duration: initialVideoAsset.duration)
@@ -90,57 +82,57 @@ final class FilterViewController: UIViewController {
             print(error)
         }
 
-        let outputUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("audioTrack.m4a")
-        if FileManager.default.fileExists(atPath: outputUrl.path) {
-            try? FileManager.default.removeItem(atPath: outputUrl.path)
-        }
+        let assetExporter = AssetExporter()
+        assetExporter.export(
+            asset: audioComposition,
+            with: .init(
+                url: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("audioTrack.m4a"),
+                fileType: .m4a,
+                preset: AVAssetExportPresetAppleM4A
+            )
+        ) { result in
+            do {
+                let url = try result.get()
 
-        let exportSession = AVAssetExportSession(asset: audioComposition, presetName: AVAssetExportPresetAppleM4A)!
-        exportSession.outputFileType = AVFileType.m4a
-        exportSession.outputURL = outputUrl
+                try self.playVideo(asset: videoComposition)
+                try self.playAudio(url: url) { url in
+                    let filteredAudio = AVAsset(url: url)
+                    filteredAudio.loadValuesAsynchronously(forKeys: ["tracks"]) {
+                        guard let filteredAudioAsset = filteredAudio.tracks(withMediaType: .audio).first else {
+                            return
+                        }
 
-        exportSession.exportAsynchronously {
-            guard case exportSession.status = AVAssetExportSession.Status.completed else { return }
+                        let filteredAudioTrack = videoComposition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
 
-            DispatchQueue.main.async {
-                guard let outputURL = exportSession.outputURL else { return }
+                        do {
+                            try filteredAudioTrack?.insertTimeRange(range, of: filteredAudioAsset, at: .zero)
+                            filteredAudioTrack?.preferredTransform = filteredAudioAsset.preferredTransform
 
-                do {
-                    try self.playVideo(asset: videoComposition)
-                    try self.playAudio(url: outputURL) { url in
-                        DispatchQueue.main.async {
-                            let filteredAudio = AVAsset(url: url)
-                            filteredAudio.loadValuesAsynchronously(forKeys: ["tracks"]) {
-                                guard let filteredAudioAsset = filteredAudio.tracks(withMediaType: .audio).first else {
-                                    return
-                                }
-
-                                let filteredAudioTrack = videoComposition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
-
+                            assetExporter.export(
+                                asset: videoComposition,
+                                with: .init(
+                                    url: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("encodedVideo.mov"),
+                                    fileType: .mov,
+                                    preset: AVAssetExportPresetPassthrough
+                                )
+                            ) { result in
                                 do {
-                                    try filteredAudioTrack?.insertTimeRange(range, of: filteredAudioAsset, at: .zero)
-                                    filteredAudioTrack?.preferredTransform = filteredAudioAsset.preferredTransform
-
-                                    encodeVideo(from: videoComposition) { result in
-                                        do {
-                                            let filteredVideoURL = try result.get()
-                                            let activityController = UIActivityViewController(activityItems: [filteredVideoURL], applicationActivities: nil)
-                                            DispatchQueue.main.async {
-                                                self.present(activityController, animated: true)
-                                            }
-                                        } catch {
-                                            print(error)
-                                        }
+                                    let filteredVideoURL = try result.get()
+                                    let activityController = UIActivityViewController(activityItems: [filteredVideoURL], applicationActivities: nil)
+                                    DispatchQueue.main.async {
+                                        self.present(activityController, animated: true)
                                     }
                                 } catch {
                                     print(error)
                                 }
                             }
+                        } catch {
+                            print(error)
                         }
                     }
-                } catch {
-                    print(error)
                 }
+            } catch {
+                print(error)
             }
         }
     }
@@ -179,7 +171,7 @@ final class FilterViewController: UIViewController {
         engine.mainMixerNode.installTap(
             onBus: 0,
             bufferSize: 4096,
-            format: audioFile.processingFormat
+            format: stereoFormat
         ) { [weak self] buffer, time in
             guard let self = self else { return }
 
@@ -195,7 +187,6 @@ final class FilterViewController: UIViewController {
             } catch {
                 print(error)
             }
-
         }
 
         audioPlayer.scheduleFile(audioFile, at: nil)
@@ -209,48 +200,5 @@ final class FilterViewController: UIViewController {
     @objc
     private func sliderValueChanged(_ sender: UISlider) {
         self.pitchControl.pitch = sender.value
-    }
-}
-
-enum ErrorKind: Error {
-    case urlIsNil
-    case encodingFailed
-    case unknown
-}
-
-func encodeVideo(from composition: AVComposition, completionHandler: @escaping (Result<URL, Error>) -> Void) {
-    let urlOut = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("encodedVideo.mov")
-
-    if FileManager.default.fileExists(atPath: urlOut.path) {
-        do {
-            try FileManager.default.removeItem(at: urlOut)
-        } catch {
-            completionHandler(.failure(error))
-        }
-    }
-
-    guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetPassthrough) else {
-        completionHandler(.failure(ErrorKind.encodingFailed))
-        return
-    }
-
-    exportSession.outputURL = urlOut
-    exportSession.outputFileType = AVFileType.mov
-
-    let start: CMTime = .zero
-    let range = CMTimeRangeMake(start: start, duration: composition.duration)
-    exportSession.timeRange = range
-
-    exportSession.exportAsynchronously {
-        switch exportSession.status {
-        case .completed:
-            if let url = exportSession.outputURL {
-                completionHandler(.success(url))
-            } else {
-                completionHandler(.failure(ErrorKind.encodingFailed))
-            }
-        default:
-            completionHandler(.failure(ErrorKind.encodingFailed))
-        }
     }
 }
