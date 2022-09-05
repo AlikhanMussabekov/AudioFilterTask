@@ -11,8 +11,9 @@ final class AssetExporter {
     enum ErrorKind: Error {
         case failedToRemoveExisitingFile
         case failedToCreateExportSession
-        case cancelled
         case failedToExportFile
+        case cancelled
+        case unknown
     }
 
     struct Configuration {
@@ -27,10 +28,11 @@ final class AssetExporter {
                 try FileManager.default.removeItem(at: configuration.url)
             } catch {
                 completion(.failure(ErrorKind.failedToRemoveExisitingFile))
+                return
             }
         }
 
-        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else {
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: configuration.preset) else {
             completion(.failure(ErrorKind.failedToCreateExportSession))
             return
         }
@@ -48,7 +50,7 @@ final class AssetExporter {
             case .failed:
                 completion(.failure(ErrorKind.failedToExportFile))
             default:
-                return
+                completion(.failure(ErrorKind.unknown))
             }
         }
     }

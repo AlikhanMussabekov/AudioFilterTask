@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import MobileCoreServices
+import AVFoundation
 
 final class MediaChooseController: UIViewController {
     private let button: UIButton = {
@@ -71,7 +72,8 @@ extension MediaChooseController: UIImagePickerControllerDelegate, UINavigationCo
 
         self.dismiss(animated: true) {
             if let mediaURL = info[.mediaURL] as? URL {
-                let filterController = FilterViewController(mediaURL: mediaURL)
+                let mediaAsset = AVAsset(url: mediaURL)
+                let filterController = FilterViewController(asset: mediaAsset)
                 self.navigationController?.pushViewController(filterController, animated: true)
             }
         }
