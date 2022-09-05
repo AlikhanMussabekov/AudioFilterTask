@@ -28,7 +28,7 @@ final class FilterViewController: UIViewController {
         return collection
     }()
 
-    private var renderedURL: URL?
+    private var filteredMedia: AVMutableComposition?
 
     override var prefersStatusBarHidden: Bool {
         true
@@ -46,13 +46,6 @@ final class FilterViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationItem.rightBarButtonItem = .init(
-            title: "Share",
-            style: .plain,
-            target: self,
-            action: #selector(shareButtonDidClick)
-        )
-
         self.view.backgroundColor = .black
         self.view.layer.insertSublayer(self.videoLayer, at: 0)
 
@@ -69,7 +62,12 @@ final class FilterViewController: UIViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        self.videoLayer.frame = self.view.bounds
+        self.videoLayer.frame = CGRect(
+            x: 0,
+            y: self.view.safeAreaInsets.top,
+            width: self.view.bounds.width,
+            height: self.view.bounds.height - self.view.safeAreaInsets.top - self.view.safeAreaInsets.bottom
+        )
 
         self.collectionView.frame = CGRect(
             origin: .init(x: 0, y: self.view.bounds.maxY - 100 - self.view.safeAreaInsets.bottom),
@@ -109,35 +107,7 @@ final class FilterViewController: UIViewController {
                 outputURL: .temporary(with: "filteredAudioFile.m4a"),
                 completion: { [weak self] filteredAudioFileURL in
                     guard let self = self else { return }
-
-                    let filteredAudioAsset = AVAsset(url: filteredAudioFileURL)
-                    guard let filteredAudioAssetTrack = filteredAudioAsset.tracks(withMediaType: .audio).first else {
-                        return
-                    }
-
-                    do {
-                        try video.apply(assetTrack: filteredAudioAssetTrack, with: .audio, in: video.range)
-                        self.assetExporter.export(
-                            asset: video,
-                            with: .init(
-                                url: .temporary(with: "encodedVideo.mov"),
-                                fileType: .mov,
-                                preset: AVAssetExportPresetPassthrough
-                            )
-                        ) { result in
-                            do {
-                                let filteredVideoURL = try result.get()
-                                self.renderedURL = filteredVideoURL
-                                DispatchQueue.main.async {
-                                    self.share(url: filteredVideoURL)
-                                }
-                            } catch {
-                                print(error)
-                            }
-                        }
-                    } catch {
-                        print(error)
-                    }
+                    self.finish(video: video, filteredAudio: filteredAudioFileURL)
                 }
             )
         )
@@ -151,18 +121,55 @@ final class FilterViewController: UIViewController {
         player.play()
     }
 
-    private func share(url: URL) {
-        let activityController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        self.present(activityController, animated: true)
+    private func finish(video: AVMutableComposition, filteredAudio url: URL) {
+        let filteredAudioAsset = AVAsset(url: url)
+        guard let filteredAudioAssetTrack = filteredAudioAsset.tracks(withMediaType: .audio).first else {
+            return
+        }
+
+        do {
+            try video.apply(assetTrack: filteredAudioAssetTrack, with: .audio, in: video.range)
+            self.filteredMedia = video
+
+            self.navigationItem.rightBarButtonItem = .init(
+                title: "Share",
+                style: .plain,
+                target: self,
+                action: #selector(shareButtonDidClick)
+            )
+        } catch {
+            print(error)
+        }
     }
 
     @objc
     private func shareButtonDidClick() {
-        guard let renderedURL = renderedURL else {
+        guard let filteredMedia = filteredMedia else {
             return
         }
 
-        self.share(url: renderedURL)
+        self.assetExporter.export(
+            asset: filteredMedia,
+            with: .init(
+                url: .temporary(with: "encodedVideo.mov"),
+                fileType: .mov,
+                preset: AVAssetExportPresetPassthrough
+            )
+        ) { result in
+            do {
+                let filteredVideoURL = try result.get()
+                DispatchQueue.main.async {
+                    self.share(url: filteredVideoURL)
+                }
+            } catch {
+                print(error)
+            }
+        }
+    }
+
+    private func share(url: URL) {
+        let activityController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        self.present(activityController, animated: true)
     }
 }
 
