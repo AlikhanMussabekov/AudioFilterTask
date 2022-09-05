@@ -33,9 +33,7 @@ final class LoadingHUD: UIView {
     private static var window: UIWindow?
 
     static func show() {
-        guard window == nil else {
-            return
-        }
+        guard window == nil else { return }
 
         let hud = LoadingHUD()
         let window = HUDWindow(with: hud)
