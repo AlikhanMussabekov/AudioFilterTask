@@ -75,7 +75,7 @@ final class FilterViewController: UIViewController {
             url: audio,
             recordingConfiguration: .init(
                 enabled: true,
-                outputURL: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("filteredAudioFile.m4a"),
+                outputURL: .temporary(with: "filteredAudioFile.m4a"),
                 completion: { [weak self] filteredAudioFileURL in
                     guard let self = self else { return }
 
@@ -89,7 +89,7 @@ final class FilterViewController: UIViewController {
                         self.assetExporter.export(
                             asset: video,
                             with: .init(
-                                url: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("encodedVideo.mov"),
+                                url: .temporary(with: "encodedVideo.mov"),
                                 fileType: .mov,
                                 preset: AVAssetExportPresetPassthrough
                             )
