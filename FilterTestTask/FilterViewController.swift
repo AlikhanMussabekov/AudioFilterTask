@@ -96,7 +96,9 @@ final class FilterViewController: UIViewController {
                         ) { result in
                             do {
                                 let filteredVideoURL = try result.get()
-                                self.share(url: filteredVideoURL)
+                                DispatchQueue.main.async {
+                                    self.share(url: filteredVideoURL)
+                                }
                             } catch {
                                 print(error)
                             }

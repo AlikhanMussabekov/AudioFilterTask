@@ -13,7 +13,7 @@ extension AVAsset {
     }
 
     func firstTrack(with type: AVMediaType) throws -> AVAssetTrack {
-        guard let track = self.tracks(withMediaType: .video).first else {
+        guard let track = self.tracks(withMediaType: type).first else {
             throw ErrorKind.trackTypeNotFound
         }
 
@@ -23,8 +23,8 @@ extension AVAsset {
     var audioComposition: AVMutableComposition {
         get throws {
             let composition = AVMutableComposition()
-            let firstVideoTrack = try self.firstTrack(with: .audio)
-            try composition.apply(assetTrack: firstVideoTrack, with: .audio, in: range)
+            let firstAudioTrack = try self.firstTrack(with: .audio)
+            try composition.apply(assetTrack: firstAudioTrack, with: .audio, in: range)
             return composition
         }
     }
