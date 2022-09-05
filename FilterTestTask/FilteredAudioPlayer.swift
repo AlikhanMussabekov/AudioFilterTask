@@ -40,18 +40,26 @@ final class FilteredAudioPlayer {
     private let speedControl = AVAudioUnitVarispeed()
     private let pitchControl = AVAudioUnitTimePitch()
     private let distortionControl = AVAudioUnitDistortion()
+    private let reverbControl = AVAudioUnitReverb()
+
+    private var nodes: [AVAudioNode] { [audioPlayer, speedControl, pitchControl, distortionControl, reverbControl] }
 
     // swiftlint:disable:next force_unwrap
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)!
 
     init() {
-        self.engine.attach(self.audioPlayer)
-        self.engine.attach(self.pitchControl)
-        self.engine.attach(self.speedControl)
+        self.nodes.forEach(self.engine.attach)
 
-        self.engine.connect(self.audioPlayer, to: self.speedControl, format: self.format)
-        self.engine.connect(self.speedControl, to: self.pitchControl, format: self.format)
-        self.engine.connect(self.pitchControl, to: self.engine.mainMixerNode, format: self.format)
+        var previousNode = self.nodes.first! // swiftlint:disable:this force_unwrap
+        var engineNodes = self.nodes
+        engineNodes.append(self.engine.mainMixerNode)
+        engineNodes.removeFirst()
+
+        var iterator = engineNodes.makeIterator()
+        while let next = iterator.next() {
+            self.engine.connect(previousNode, to: next, format: self.format)
+            previousNode = next
+        }
     }
 
     func play(url: URL, recordingConfiguration: RecordingConfiguration) throws {

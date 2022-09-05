@@ -44,6 +44,8 @@ final class FilterViewController: UIViewController {
         fatalError()
     }
 
+    // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .black
@@ -75,6 +77,8 @@ final class FilterViewController: UIViewController {
         )
     }
 
+    // MARK: - Media rocessing
+
     private func process() throws {
         let videoComposition = try self.mediaAsset.videoComposition
         let audioComposition = try self.mediaAsset.audioComposition
@@ -97,6 +101,8 @@ final class FilterViewController: UIViewController {
             }
         }
     }
+
+    // MARK: - Playback
 
     private func play(video: AVMutableComposition, audio: URL) throws {
         try self.playVideo(asset: video)
@@ -131,16 +137,20 @@ final class FilterViewController: UIViewController {
             try video.apply(assetTrack: filteredAudioAssetTrack, with: .audio, in: video.range)
             self.filteredMedia = video
 
-            self.navigationItem.rightBarButtonItem = .init(
-                title: "Share",
-                style: .plain,
-                target: self,
-                action: #selector(shareButtonDidClick)
-            )
+            DispatchQueue.main.async {
+                self.navigationItem.rightBarButtonItem = .init(
+                    title: "Share",
+                    style: .plain,
+                    target: self,
+                    action: #selector(self.shareButtonDidClick)
+                )
+            }
         } catch {
             print(error)
         }
     }
+
+    // MARK: - Sharing
 
     @objc
     private func shareButtonDidClick() {
@@ -172,6 +182,8 @@ final class FilterViewController: UIViewController {
         self.present(activityController, animated: true)
     }
 }
+
+// MARK: - FilterViewController + CollectionView
 
 extension FilterViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {

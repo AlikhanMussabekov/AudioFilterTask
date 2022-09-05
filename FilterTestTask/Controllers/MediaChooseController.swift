@@ -63,6 +63,8 @@ final class MediaChooseController: UIViewController {
     }
 }
 
+// MARK: - MediaChooseController + UIImagePickerControllerDelegate
+
 extension MediaChooseController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         self.dismiss(animated: true)

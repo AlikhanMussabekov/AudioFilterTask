@@ -73,8 +73,8 @@
 			isa = PBXGroup;
 			children = (
 				078A2B4C28C4994A00D1AC41 /* AppDelegate.swift */,
-				078A2B6228C55C9F00D1AC41 /* AssetExporter.swift */,
 				078A2B6428C5652B00D1AC41 /* FilteredAudioPlayer.swift */,
+				078A2B7728C6220900D1AC41 /* Utilities */,
 				078A2B7628C61F8000D1AC41 /* Controllers */,
 				078A2B7328C61F6500D1AC41 /* ImageCollectionView */,
 				078A2B6628C56DFF00D1AC41 /* Extensions */,
@@ -113,6 +113,14 @@
 				078A2B5028C4994A00D1AC41 /* MediaChooseController.swift */,
 			);
 			path = Controllers;
+			sourceTree = "<group>";
+		};
+		078A2B7728C6220900D1AC41 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				078A2B6228C55C9F00D1AC41 /* AssetExporter.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
