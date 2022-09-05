@@ -8,6 +8,19 @@
 import AVKit
 
 final class FilteredAudioPlayer {
+    struct PresetConfiguration {
+        let pitch: Float
+        let image: UIImage?
+    }
+
+    let presets: [PresetConfiguration] = [
+        .init(pitch: -300, image: "👨🏻".toImage()),
+        .init(pitch: 300, image: "👧🏻".toImage()),
+        .init(pitch: -600, image: "🤖".toImage()),
+        .init(pitch: 0, image: "🏠".toImage()),
+        .init(pitch: 600, image: "🐹".toImage())
+    ]
+
     struct RecordingConfiguration {
         typealias Completion = (URL) -> Void
 
@@ -78,7 +91,7 @@ final class FilteredAudioPlayer {
         self.audioPlayer.play()
     }
 
-    func apply() {
-        // TODO: - filter applying
+    func apply(preset: PresetConfiguration) {
+        self.pitchControl.pitch = preset.pitch
     }
 }

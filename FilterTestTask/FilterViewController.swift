@@ -15,6 +15,21 @@ final class FilterViewController: UIViewController {
     private let videoLayer = AVPlayerLayer()
     private let assetExporter = AssetExporter()
 
+    private let collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumLineSpacing = 40
+        layout.itemSize = CGSize(width: 50, height: 50)
+        layout.scrollDirection = .horizontal
+
+        let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collection.register(ImageCollectionCell.self, forCellWithReuseIdentifier: ImageCollectionCell.reuseIdentifier)
+        collection.backgroundColor = .clear
+        collection.contentInset = .init(top: 0, left: 20, bottom: 0, right: 20)
+        return collection
+    }()
+
+    private var renderedURL: URL?
+
     override var prefersStatusBarHidden: Bool {
         true
     }
@@ -31,8 +46,19 @@ final class FilterViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationItem.rightBarButtonItem = .init(
+            title: "Share",
+            style: .plain,
+            target: self,
+            action: #selector(shareButtonDidClick)
+        )
+
         self.view.backgroundColor = .black
         self.view.layer.insertSublayer(self.videoLayer, at: 0)
+
+        self.collectionView.dataSource = self
+        self.collectionView.delegate = self
+        self.view.addSubview(self.collectionView)
 
         do {
             try self.process()
@@ -44,6 +70,11 @@ final class FilterViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         self.videoLayer.frame = self.view.bounds
+
+        self.collectionView.frame = CGRect(
+            origin: .init(x: 0, y: self.view.bounds.maxY - 100 - self.view.safeAreaInsets.bottom),
+            size: .init(width: self.view.bounds.width, height: 100)
+        )
     }
 
     private func process() throws {
@@ -96,6 +127,7 @@ final class FilterViewController: UIViewController {
                         ) { result in
                             do {
                                 let filteredVideoURL = try result.get()
+                                self.renderedURL = filteredVideoURL
                                 DispatchQueue.main.async {
                                     self.share(url: filteredVideoURL)
                                 }
@@ -122,5 +154,43 @@ final class FilterViewController: UIViewController {
     private func share(url: URL) {
         let activityController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         self.present(activityController, animated: true)
+    }
+
+    @objc
+    private func shareButtonDidClick() {
+        guard let renderedURL = renderedURL else {
+            return
+        }
+
+        self.share(url: renderedURL)
+    }
+}
+
+extension FilterViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard
+            let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: ImageCollectionCell.reuseIdentifier,
+                for: indexPath
+            ) as? ImageCollectionCell
+        else {
+            fatalError()
+        }
+
+        cell.image = self.filteredAudioPlayer.presets[indexPath.row].image
+        return cell
+    }
+
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        1
+    }
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        self.filteredAudioPlayer.presets.count
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let selectedPreset = self.filteredAudioPlayer.presets[indexPath.row]
+        self.filteredAudioPlayer.apply(preset: selectedPreset)
     }
 }
