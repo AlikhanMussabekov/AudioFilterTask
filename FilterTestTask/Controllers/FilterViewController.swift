@@ -14,19 +14,7 @@ final class FilterViewController: UIViewController {
     private let filteredAudioPlayer = FilteredAudioPlayer()
     private let videoLayer = AVPlayerLayer()
     private let assetExporter = AssetExporter()
-
-    private let collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.minimumLineSpacing = 40
-        layout.itemSize = CGSize(width: 50, height: 50)
-        layout.scrollDirection = .horizontal
-
-        let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collection.register(ImageCollectionCell.self, forCellWithReuseIdentifier: ImageCollectionCell.reuseIdentifier)
-        collection.backgroundColor = .clear
-        collection.contentInset = .init(top: 0, left: 20, bottom: 0, right: 20)
-        return collection
-    }()
+    private let collectionView = ImageCollectionView()
 
     private var filteredMedia: AVMutableComposition?
 

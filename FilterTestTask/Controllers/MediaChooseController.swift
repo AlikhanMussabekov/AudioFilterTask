@@ -56,7 +56,11 @@ final class MediaChooseController: UIViewController {
         }
 
         sheet.addAction(.init(title: "Library", style: .default, handler: libraryAction))
-        sheet.addAction(.init(title: "Camera", style: .default, handler: cameraAction))
+
+        if UIImagePickerController.isCameraDeviceAvailable(.rear) || UIImagePickerController.isCameraDeviceAvailable(.front) {
+            sheet.addAction(.init(title: "Camera", style: .default, handler: cameraAction))
+        }
+
         sheet.addAction(.init(title: "Cancel", style: .cancel))
 
         self.present(sheet, animated: true)
