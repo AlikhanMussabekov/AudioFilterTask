@@ -158,6 +158,8 @@ final class FilterViewController: UIViewController {
             return
         }
 
+        LoadingHUD.show()
+
         self.assetExporter.export(
             asset: filteredMedia,
             with: .init(
@@ -166,6 +168,10 @@ final class FilterViewController: UIViewController {
                 preset: AVAssetExportPresetPassthrough
             )
         ) { result in
+            DispatchQueue.main.async {
+                LoadingHUD.hide()
+            }
+
             do {
                 let filteredVideoURL = try result.get()
                 DispatchQueue.main.async {

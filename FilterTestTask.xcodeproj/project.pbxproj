@@ -21,6 +21,7 @@
 		078A2B7028C6152600D1AC41 /* ImageCollectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B6F28C6152600D1AC41 /* ImageCollectionCell.swift */; };
 		078A2B7228C6160F00D1AC41 /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B7128C6160F00D1AC41 /* String.swift */; };
 		078A2B7528C61F7500D1AC41 /* ImageCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B7428C61F7500D1AC41 /* ImageCollectionView.swift */; };
+		078A2B7928C6259000D1AC41 /* LoadingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B7828C6259000D1AC41 /* LoadingHUD.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		078A2B6F28C6152600D1AC41 /* ImageCollectionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCollectionCell.swift; sourceTree = "<group>"; };
 		078A2B7128C6160F00D1AC41 /* String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 		078A2B7428C61F7500D1AC41 /* ImageCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCollectionView.swift; sourceTree = "<group>"; };
+		078A2B7828C6259000D1AC41 /* LoadingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingHUD.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +121,7 @@
 			isa = PBXGroup;
 			children = (
 				078A2B6228C55C9F00D1AC41 /* AssetExporter.swift */,
+				078A2B7828C6259000D1AC41 /* LoadingHUD.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -200,6 +203,7 @@
 				078A2B7028C6152600D1AC41 /* ImageCollectionCell.swift in Sources */,
 				078A2B6A28C56E2800D1AC41 /* AVMutableComposition.swift in Sources */,
 				078A2B5128C4994A00D1AC41 /* MediaChooseController.swift in Sources */,
+				078A2B7928C6259000D1AC41 /* LoadingHUD.swift in Sources */,
 				078A2B6E28C6140900D1AC41 /* UICollectionViewCell.swift in Sources */,
 				078A2B4D28C4994A00D1AC41 /* AppDelegate.swift in Sources */,
 				078A2B6328C55C9F00D1AC41 /* AssetExporter.swift in Sources */,
