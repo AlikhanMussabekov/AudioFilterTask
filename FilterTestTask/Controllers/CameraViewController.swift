@@ -7,6 +7,8 @@
 
 import UIKit
 import AVKit
+import Photos
+import MobileCoreServices
 
 final class PreviewView: UIView {
     override class var layerClass: AnyClass {
@@ -28,7 +30,6 @@ protocol CameraViewControllerDelegate: AnyObject {
     func cameraViewController(_ controller: CameraViewController, didFinishRecordingWith outputURL: URL)
     func cameraViewController(_ controller: CameraViewController, recordingDidFailWith error: Error)
 }
-
 
 final class CameraViewController: UIViewController {
     private struct Device: Equatable {
@@ -74,10 +75,8 @@ final class CameraViewController: UIViewController {
     private let captureSession = AVCaptureSession()
     private var currentState: State!
 
-    private let closeButton: UIButton = {
+    private let galleryButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.setImage(.init(named: "close"), for: .normal)
-        button.tintColor = .white
         button.contentVerticalAlignment = .fill
         button.contentHorizontalAlignment = .fill
         return button
@@ -111,8 +110,16 @@ final class CameraViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.closeButton.addTarget(self, action: #selector(closeButtonDidTap), for: .touchUpInside)
-        self.view.addSubview(closeButton)
+        self.loadLastImageThumb(size: .init(width: 40, height: 40)) { image in
+            if let image = image {
+                self.galleryButton.setImage(image, for: .normal)
+            } else {
+                self.galleryButton.backgroundColor = .gray
+            }
+        }
+
+        self.galleryButton.addTarget(self, action: #selector(galleryButtonDidTap), for: .touchUpInside)
+        self.view.addSubview(galleryButton)
 
         self.recordButton.addTarget(self, action: #selector(recordButtonDidTap), for: .touchUpInside)
         self.view.addSubview(recordButton)
@@ -122,19 +129,37 @@ final class CameraViewController: UIViewController {
 
         self.previewView.session = captureSession
 
-        self.setupCaptureSession()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.setupCaptureSession()
+        }
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        self.closeButton.frame = CGRect(x: 20, y: self.view.safeAreaInsets.top + 40, width: 20, height: 20)
+        self.galleryButton.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+        self.galleryButton.center = CGPoint(x: 40, y: self.view.bounds.maxY - 100)
 
         self.recordButton.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
         self.recordButton.center = CGPoint(x: self.view.bounds.width / 2, y: self.view.bounds.maxY - 100)
 
         self.changeCameraButton.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
         self.changeCameraButton.center = CGPoint(x: self.view.bounds.width - 20 - 40, y: self.view.bounds.maxY - 100)
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard !self.captureSession.isRunning else { return }
+            self.captureSession.startRunning()
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.captureSession.stopRunning()
+        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -144,13 +169,42 @@ final class CameraViewController: UIViewController {
         }
     }
 
+    private func loadLastImageThumb(size: CGSize, completion: @escaping (UIImage?) -> Void) {
+        let imgManager = PHImageManager.default()
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.fetchLimit = 1
+        fetchOptions.sortDescriptors = [.init(key: "creationDate", ascending: false)]
+
+        guard let fetchResult = PHAsset.fetchAssets(with: .video, options: fetchOptions).lastObject else {
+            completion(nil)
+            return
+        }
+
+        let scale = UIScreen.main.scale
+        let scaledSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .fastFormat
+        options.resizeMode = .fast
+
+        imgManager.requestImage(
+            for: fetchResult,
+            targetSize: scaledSize,
+            contentMode: .aspectFill,
+            options: options
+        ) { image, _ in
+            if let image = image {
+                completion(image)
+            }
+        }
+    }
+
     @objc
-    private func closeButtonDidTap() {
-        self.processStateChange(
-            from: self.currentState,
-            to: .init(isRecording: false, camera: self.currentState.camera, output: self.currentState.output)
-        )
-        self.dismiss(animated: true)
+    private func galleryButtonDidTap() {
+        let picker = UIImagePickerController()
+        picker.sourceType = .photoLibrary
+        picker.mediaTypes = [kUTTypeMovie as String]
+        picker.delegate = self
+        self.present(picker, animated: true)
     }
 
     @objc
@@ -214,50 +268,51 @@ final class CameraViewController: UIViewController {
                     self.recordButton.tintColor = .white
                     self.stopRecording(state: newState)
                 }
+
+                self.galleryButton.isHidden = newState.isRecording
+
                 self.currentState = newState
             }
         }
     }
 
     private func setupCaptureSession() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.captureSession.beginConfiguration()
-            defer {
-                self.captureSession.commitConfiguration()
-                self.captureSession.startRunning()
-            }
+        self.captureSession.startRunning()
+        self.captureSession.beginConfiguration()
+        defer {
+            self.captureSession.commitConfiguration()
+        }
 
-            guard
-                let micDeviceInput = Device.Audio.mic?.avCaptureDeviceInput,
-                self.captureSession.canAddInput(micDeviceInput)
-            else {
-                return
-            }
+        guard
+            let micDeviceInput = Device.Audio.mic?.avCaptureDeviceInput,
+            self.captureSession.canAddInput(micDeviceInput)
+        else {
+            return
+        }
 
-            guard
-                let backCamera = Device.Camera.back,
-                self.captureSession.canAddInput(backCamera.avCaptureDeviceInput)
-            else {
-                return
-            }
+        guard
+            let backCamera = Device.Camera.back,
+            self.captureSession.canAddInput(backCamera.avCaptureDeviceInput)
+        else {
+            return
+        }
 
-            let output = AVCaptureMovieFileOutput()
-            guard self.captureSession.canAddOutput(output) else {
-                return
-            }
+        let output = AVCaptureMovieFileOutput()
+        guard self.captureSession.canAddOutput(output) else {
+            return
+        }
 
-            guard self.captureSession.canSetSessionPreset(.hd1920x1080) else {
-                return
-            }
+        guard self.captureSession.canSetSessionPreset(.hd1920x1080) else {
+            return
+        }
 
-            self.captureSession.addInput(backCamera.avCaptureDeviceInput)
-            self.captureSession.addInput(micDeviceInput)
-            self.captureSession.addOutput(output)
-            self.captureSession.sessionPreset = .hd1920x1080
-            
-            DispatchQueue.main.async {
-                self.currentState = .init(isRecording: false, camera: backCamera, output: output)
-            }
+        self.captureSession.addInput(backCamera.avCaptureDeviceInput)
+        self.captureSession.addInput(micDeviceInput)
+        self.captureSession.addOutput(output)
+        self.captureSession.sessionPreset = .hd1920x1080
+
+        DispatchQueue.main.async {
+            self.currentState = .init(isRecording: false, camera: backCamera, output: output)
         }
     }
 
@@ -305,6 +360,12 @@ final class CameraViewController: UIViewController {
         self.captureSession.startRunning()
     }
 
+    private func presentFilterController(with url: URL) {
+        let mediaAsset = AVAsset(url: url)
+        let controller = FilterViewController(asset: mediaAsset)
+        let filterController = UINavigationController(rootViewController: controller)
+        self.present(filterController, animated: true)
+    }
 }
 
 extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
@@ -317,5 +378,23 @@ extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
 
         print("recording finished")
         self.delegate?.cameraViewController(self, didFinishRecordingWith: outputFileURL)
+        self.presentFilterController(with: outputFileURL)
+    }
+}
+
+// MARK: - MediaChooseController + UIImagePickerControllerDelegate
+
+extension CameraViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        self.dismiss(animated: true)
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+
+        self.dismiss(animated: true) {
+            if let mediaURL = info[.mediaURL] as? URL {
+                self.presentFilterController(with: mediaURL)
+            }
+        }
     }
 }

@@ -64,20 +64,22 @@ final class FilteredAudioPlayer {
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)!
 
     init() {
-        self.nodes.forEach(self.engine.attach)
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.nodes.forEach(self.engine.attach)
 
-        var previousNode = self.nodes.first! // swiftlint:disable:this force_unwrap
-        var engineNodes = self.nodes
-        engineNodes.append(self.engine.mainMixerNode)
-        engineNodes.removeFirst()
+            var previousNode = self.nodes.first! // swiftlint:disable:this force_unwrap
+            var engineNodes = self.nodes
+            engineNodes.append(self.engine.mainMixerNode)
+            engineNodes.removeFirst()
 
-        var iterator = engineNodes.makeIterator()
-        while let next = iterator.next() {
-            self.engine.connect(previousNode, to: next, format: self.format)
-            previousNode = next
+            var iterator = engineNodes.makeIterator()
+            while let next = iterator.next() {
+                self.engine.connect(previousNode, to: next, format: self.format)
+                previousNode = next
+            }
+
+            self.apply(preset: .init(image: nil))
         }
-
-        self.apply(preset: .init(image: nil))
     }
 
     func play(url: URL, recordingConfiguration: RecordingConfiguration) throws {

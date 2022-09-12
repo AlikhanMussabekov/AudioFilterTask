@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Enable library access for filtering recorded videos</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Enable camera access for video recording</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Enable microphone access for video recording</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>

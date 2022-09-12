@@ -11,9 +11,9 @@ import AVKit
 final class FilterViewController: UIViewController {
     private let mediaAsset: AVAsset
 
-    private let filteredAudioPlayer = FilteredAudioPlayer()
-    private let videoLayer = AVPlayerLayer()
-    private let assetExporter = AssetExporter()
+    private lazy var filteredAudioPlayer = FilteredAudioPlayer()
+    private lazy var videoLayer = AVPlayerLayer()
+    private lazy var assetExporter = AssetExporter()
     private let collectionView = ImageCollectionView()
 
     private var filteredMedia: AVMutableComposition?
@@ -36,17 +36,34 @@ final class FilterViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationItem.rightBarButtonItem = .init(
+            title: "Share",
+            style: .plain,
+            target: self,
+            action: #selector(shareButtonDidClick)
+        )
+
+        self.navigationItem.leftBarButtonItem = .init(
+            title: "Cancel",
+            style: .plain,
+            target: self,
+            action: #selector(cancelButtonDidClick)
+        )
+
         self.view.backgroundColor = .black
-        self.view.layer.insertSublayer(self.videoLayer, at: 0)
 
         self.collectionView.dataSource = self
         self.collectionView.delegate = self
         self.view.addSubview(self.collectionView)
 
-        do {
-            try self.process()
-        } catch {
-            print(error)
+        self.view.layer.insertSublayer(self.videoLayer, at: 0)
+
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1) {
+            do {
+                try self.process()
+            } catch {
+                print(error)
+            }
         }
     }
 
@@ -81,11 +98,13 @@ final class FilterViewController: UIViewController {
         ) { [weak self] result in
             guard let self = self else { return }
 
-            do {
-                let url = try result.get()
-                try self.play(video: videoComposition, audio: url)
-            } catch {
-                print(error)
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    let url = try result.get()
+                    try self.play(video: videoComposition, audio: url)
+                } catch {
+                    print(error)
+                }
             }
         }
     }
@@ -124,15 +143,6 @@ final class FilterViewController: UIViewController {
         do {
             try video.apply(assetTrack: filteredAudioAssetTrack, with: .audio, in: video.range)
             self.filteredMedia = video
-
-            DispatchQueue.main.async {
-                self.navigationItem.rightBarButtonItem = .init(
-                    title: "Share",
-                    style: .plain,
-                    target: self,
-                    action: #selector(self.shareButtonDidClick)
-                )
-            }
         } catch {
             print(error)
         }
@@ -174,6 +184,11 @@ final class FilterViewController: UIViewController {
     private func share(url: URL) {
         let activityController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         self.present(activityController, animated: true)
+    }
+
+    @objc
+    private func cancelButtonDidClick() {
+        self.dismiss(animated: true)
     }
 }
 
