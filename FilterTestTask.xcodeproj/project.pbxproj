@@ -22,6 +22,7 @@
 		078A2B7228C6160F00D1AC41 /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B7128C6160F00D1AC41 /* String.swift */; };
 		078A2B7528C61F7500D1AC41 /* ImageCollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B7428C61F7500D1AC41 /* ImageCollectionView.swift */; };
 		078A2B7928C6259000D1AC41 /* LoadingHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B7828C6259000D1AC41 /* LoadingHUD.swift */; };
+		07D7562028CBC48D006DCEDA /* CameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D7561F28CBC48D006DCEDA /* CameraViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +43,7 @@
 		078A2B7128C6160F00D1AC41 /* String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 		078A2B7428C61F7500D1AC41 /* ImageCollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCollectionView.swift; sourceTree = "<group>"; };
 		078A2B7828C6259000D1AC41 /* LoadingHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingHUD.swift; sourceTree = "<group>"; };
+		07D7561F28CBC48D006DCEDA /* CameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +115,7 @@
 			children = (
 				078A2B6028C505E300D1AC41 /* FilterViewController.swift */,
 				078A2B5028C4994A00D1AC41 /* MediaChooseController.swift */,
+				07D7561F28CBC48D006DCEDA /* CameraViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -207,6 +210,7 @@
 				078A2B6E28C6140900D1AC41 /* UICollectionViewCell.swift in Sources */,
 				078A2B4D28C4994A00D1AC41 /* AppDelegate.swift in Sources */,
 				078A2B6328C55C9F00D1AC41 /* AssetExporter.swift in Sources */,
+				07D7562028CBC48D006DCEDA /* CameraViewController.swift in Sources */,
 				078A2B7528C61F7500D1AC41 /* ImageCollectionView.swift in Sources */,
 				078A2B6C28C60DFC00D1AC41 /* URL.swift in Sources */,
 			);

@@ -8,7 +8,7 @@
 import Foundation
 
 extension URL {
-    static func temporary(with fileName: String) -> URL {
+    static func temporary(fileName: String) -> URL {
         Self(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
     }
 }

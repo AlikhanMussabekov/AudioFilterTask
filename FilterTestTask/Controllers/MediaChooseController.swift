@@ -48,11 +48,10 @@ final class MediaChooseController: UIViewController {
         }
 
         let cameraAction: (UIAlertAction) -> Void = { _ in
-            let picker = UIImagePickerController()
-            picker.sourceType = .camera
-            picker.mediaTypes = [kUTTypeMovie as String]
-            picker.delegate = self
-            self.present(picker, animated: true)
+            let camera = CameraViewController()
+            camera.delegate = self
+            camera.modalPresentationStyle = .fullScreen
+            self.present(camera, animated: true)
         }
 
         sheet.addAction(.init(title: "Library", style: .default, handler: libraryAction))
@@ -64,6 +63,24 @@ final class MediaChooseController: UIViewController {
         sheet.addAction(.init(title: "Cancel", style: .cancel))
 
         self.present(sheet, animated: true)
+    }
+}
+
+extension MediaChooseController: CameraViewControllerDelegate {
+    func cameraViewControllerDidStartRecording(_ controller: CameraViewController) {
+        print("recording started")
+    }
+
+    func cameraViewController(_ controller: CameraViewController, didFinishRecordingWith outputURL: URL) {
+        self.dismiss(animated: true) {
+            let mediaAsset = AVAsset(url: outputURL)
+            let filterController = FilterViewController(asset: mediaAsset)
+            self.navigationController?.pushViewController(filterController, animated: true)
+        }
+    }
+
+    func cameraViewController(_ controller: CameraViewController, recordingDidFailWith error: Error) {
+        print(error)
     }
 }
 
