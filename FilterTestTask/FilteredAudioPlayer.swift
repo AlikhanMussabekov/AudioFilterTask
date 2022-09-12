@@ -9,14 +9,19 @@ import AVKit
 
 final class FilteredAudioPlayer {
     struct PresetConfiguration {
+        struct Distortion {
+            var value: Float = -6
+            var mix: Float = 0
+        }
+
         let pitch: Float
         let reverb: Float
-        let distortion: Float
+        let distortion: Distortion
         let speed: Float
 
         let image: UIImage?
 
-        init(pitch: Float = 0, reverb: Float = 0, distortion: Float = -6, speed: Float = 1, image: UIImage?) {
+        init(pitch: Float = 0, reverb: Float = 0, distortion: Distortion = .init(), speed: Float = 1, image: UIImage?) {
             self.pitch = pitch
             self.reverb = reverb
             self.distortion = distortion
@@ -28,7 +33,7 @@ final class FilteredAudioPlayer {
     let presets: [PresetConfiguration] = [
         .init(pitch: -100, speed: 0.9, image: "👨🏻".toImage()),
         .init(pitch: 300, speed: 1.1, image: "👧🏻".toImage()),
-        .init(pitch: -600, distortion: -20, image: "🤖".toImage()),
+        .init(pitch: -600, distortion: .init(value: -20, mix: 40), image: "🤖".toImage()),
         .init(pitch: 0, reverb: 20, image: "🏠".toImage()),
         .init(pitch: 900, image: "🐹".toImage())
     ]
@@ -54,9 +59,8 @@ final class FilteredAudioPlayer {
     private let distortionControl = AVAudioUnitDistortion()
     private let reverbControl = AVAudioUnitReverb()
 
-    private var nodes: [AVAudioNode] { [audioPlayer, speedControl, pitchControl, /*distortionControl,*/ reverbControl] }
+    private var nodes: [AVAudioNode] { [audioPlayer, speedControl, pitchControl, distortionControl, reverbControl] }
 
-    // swiftlint:disable:next force_unwrap
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)!
 
     init() {
@@ -72,6 +76,8 @@ final class FilteredAudioPlayer {
             self.engine.connect(previousNode, to: next, format: self.format)
             previousNode = next
         }
+
+        self.apply(preset: .init(image: nil))
     }
 
     func play(url: URL, recordingConfiguration: RecordingConfiguration) throws {
@@ -114,7 +120,8 @@ final class FilteredAudioPlayer {
     func apply(preset: PresetConfiguration) {
         self.pitchControl.pitch = preset.pitch
         self.reverbControl.wetDryMix = preset.reverb
-        self.distortionControl.preGain = preset.distortion
+        self.distortionControl.preGain = preset.distortion.value
+        self.distortionControl.wetDryMix = preset.distortion.mix
         self.speedControl.rate = preset.speed
     }
 }
