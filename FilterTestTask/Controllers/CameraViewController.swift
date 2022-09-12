@@ -122,10 +122,7 @@ final class CameraViewController: UIViewController {
 
         self.previewView.session = captureSession
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.setupCaptureSession()
-            self.captureSession.startRunning()
-        }
+        self.setupCaptureSession()
     }
 
     override func viewDidLayoutSubviews() {
@@ -191,63 +188,77 @@ final class CameraViewController: UIViewController {
     }
 
     private func processStateChange(from oldState: State?, to newState: State) {
-        captureSession.beginConfiguration()
-        defer { captureSession.commitConfiguration() }
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.captureSession.beginConfiguration()
+            defer { self.captureSession.commitConfiguration() }
 
-        if let oldState = oldState {
-            if oldState.camera != newState.camera {
-                self.captureSession.removeInput(oldState.camera.avCaptureDeviceInput)
-                self.captureSession.addInput(newState.camera.avCaptureDeviceInput)
+            if let oldState = oldState {
+                if oldState.camera != newState.camera {
+                    self.captureSession.removeInput(oldState.camera.avCaptureDeviceInput)
+                    self.captureSession.addInput(newState.camera.avCaptureDeviceInput)
+                }
+
+                if oldState.output != newState.output {
+                    self.captureSession.removeOutput(oldState.output)
+                    self.captureSession.addOutput(newState.output)
+                }
             }
 
-            if oldState.output != newState.output {
-                self.captureSession.removeOutput(oldState.output)
-                self.captureSession.addOutput(newState.output)
+            DispatchQueue.main.async {
+                if newState.isRecording {
+                    self.recordButton.setImage(.init(named: "stop"), for: .normal)
+                    self.recordButton.tintColor = .red
+                    self.startRecording(state: newState)
+                } else {
+                    self.recordButton.setImage(.init(named: "record"), for: .normal)
+                    self.recordButton.tintColor = .white
+                    self.stopRecording(state: newState)
+                }
+                self.currentState = newState
             }
         }
-
-        if newState.isRecording {
-            self.recordButton.setImage(.init(named: "stop"), for: .normal)
-            self.recordButton.tintColor = .red
-            self.startRecording(state: newState)
-        } else {
-            self.recordButton.setImage(.init(named: "record"), for: .normal)
-            self.recordButton.tintColor = .white
-            self.stopRecording(state: newState)
-        }
-
-        self.currentState = newState
     }
 
     private func setupCaptureSession() {
-        self.captureSession.beginConfiguration()
-        defer { self.captureSession.commitConfiguration() }
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.captureSession.beginConfiguration()
+            defer {
+                self.captureSession.commitConfiguration()
+                self.captureSession.startRunning()
+            }
 
-        guard
-            let micDeviceInput = Device.Audio.mic?.avCaptureDeviceInput,
-            self.captureSession.canAddInput(micDeviceInput)
-        else {
-            return
+            guard
+                let micDeviceInput = Device.Audio.mic?.avCaptureDeviceInput,
+                self.captureSession.canAddInput(micDeviceInput)
+            else {
+                return
+            }
+
+            guard
+                let backCamera = Device.Camera.back,
+                self.captureSession.canAddInput(backCamera.avCaptureDeviceInput)
+            else {
+                return
+            }
+
+            let output = AVCaptureMovieFileOutput()
+            guard self.captureSession.canAddOutput(output) else {
+                return
+            }
+
+            guard self.captureSession.canSetSessionPreset(.hd1920x1080) else {
+                return
+            }
+
+            self.captureSession.addInput(backCamera.avCaptureDeviceInput)
+            self.captureSession.addInput(micDeviceInput)
+            self.captureSession.addOutput(output)
+            self.captureSession.sessionPreset = .hd1920x1080
+            
+            DispatchQueue.main.async {
+                self.currentState = .init(isRecording: false, camera: backCamera, output: output)
+            }
         }
-
-        guard
-            let backCamera = Device.Camera.back,
-            self.captureSession.canAddInput(backCamera.avCaptureDeviceInput)
-        else {
-            return
-        }
-
-        let output = AVCaptureMovieFileOutput()
-        guard self.captureSession.canAddOutput(output) else {
-            return
-        }
-
-        self.captureSession.addInput(backCamera.avCaptureDeviceInput)
-        self.captureSession.addInput(micDeviceInput)
-        self.captureSession.addOutput(output)
-        self.captureSession.sessionPreset = .hd1920x1080
-
-        self.currentState = .init(isRecording: false, camera: backCamera, output: output)
     }
 
     private func setupCaptureObservers() {
