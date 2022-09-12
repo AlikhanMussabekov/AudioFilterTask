@@ -9,6 +9,8 @@ import AVKit
 
 final class FilteredAudioPlayer {
     struct PresetConfiguration {
+        static let `default` = Self()
+
         struct Distortion {
             var value: Float = -6
             var mix: Float = 0
@@ -18,24 +20,32 @@ final class FilteredAudioPlayer {
         let reverb: Float
         let distortion: Distortion
         let speed: Float
+        let emoji: String?
 
-        let image: UIImage?
-
-        init(pitch: Float = 0, reverb: Float = 0, distortion: Distortion = .init(), speed: Float = 1, image: UIImage?) {
+        init(pitch: Float = 0, reverb: Float = 0, distortion: Distortion = .init(), speed: Float = 1, emoji: String? = nil) {
             self.pitch = pitch
             self.reverb = reverb
             self.distortion = distortion
             self.speed = speed
-            self.image = image
+            self.emoji = emoji
+        }
+
+        func requestImage(completion: @escaping (UIImage?) -> Void) {
+            DispatchQueue.global(qos: .background).async {
+                let image = self.emoji?.toImage()
+                DispatchQueue.main.async {
+                    completion(image)
+                }
+            }
         }
     }
 
-    let presets: [PresetConfiguration] = [
-        .init(pitch: -100, speed: 0.9, image: "👨🏻".toImage()),
-        .init(pitch: 300, speed: 1.1, image: "👧🏻".toImage()),
-        .init(pitch: -600, distortion: .init(value: -20, mix: 40), image: "🤖".toImage()),
-        .init(pitch: 0, reverb: 20, image: "🏠".toImage()),
-        .init(pitch: 900, image: "🐹".toImage())
+    lazy var presets: [PresetConfiguration] = [
+        .init(pitch: -100, speed: 0.9, emoji: "👨🏻"),
+        .init(pitch: 300, speed: 1.1, emoji: "👧🏻"),
+        .init(pitch: -600, distortion: .init(value: -20, mix: 40), emoji: "🤖"),
+        .init(pitch: 0, reverb: 20, emoji: "🏠"),
+        .init(pitch: 900, emoji: "🐹")
     ]
 
     struct RecordingConfiguration {
@@ -64,22 +74,20 @@ final class FilteredAudioPlayer {
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)!
 
     init() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.nodes.forEach(self.engine.attach)
+        self.nodes.forEach(self.engine.attach)
 
-            var previousNode = self.nodes.first! // swiftlint:disable:this force_unwrap
-            var engineNodes = self.nodes
-            engineNodes.append(self.engine.mainMixerNode)
-            engineNodes.removeFirst()
+        var previousNode = self.nodes.first! // swiftlint:disable:this force_unwrap
+        var engineNodes = self.nodes
+        engineNodes.append(self.engine.mainMixerNode)
+        engineNodes.removeFirst()
 
-            var iterator = engineNodes.makeIterator()
-            while let next = iterator.next() {
-                self.engine.connect(previousNode, to: next, format: self.format)
-                previousNode = next
-            }
-
-            self.apply(preset: .init(image: nil))
+        var iterator = engineNodes.makeIterator()
+        while let next = iterator.next() {
+            self.engine.connect(previousNode, to: next, format: self.format)
+            previousNode = next
         }
+
+        self.apply(preset: .default)
     }
 
     func play(url: URL, recordingConfiguration: RecordingConfiguration) throws {

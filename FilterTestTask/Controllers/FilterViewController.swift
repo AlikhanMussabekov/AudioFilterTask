@@ -58,7 +58,7 @@ final class FilterViewController: UIViewController {
 
         self.view.layer.insertSublayer(self.videoLayer, at: 0)
 
-        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.global(qos: .userInitiated).async {
             do {
                 try self.process()
             } catch {
@@ -205,7 +205,10 @@ extension FilterViewController: UICollectionViewDelegate, UICollectionViewDataSo
             fatalError()
         }
 
-        cell.image = self.filteredAudioPlayer.presets[indexPath.row].image
+        self.filteredAudioPlayer.presets[indexPath.row].requestImage {
+            cell.image = $0
+        }
+
         return cell
     }
 
