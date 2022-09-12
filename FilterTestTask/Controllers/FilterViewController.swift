@@ -205,7 +205,9 @@ extension FilterViewController: UICollectionViewDelegate, UICollectionViewDataSo
             fatalError()
         }
 
+        cell.backgroundColor = .gray
         self.filteredAudioPlayer.presets[indexPath.row].requestImage {
+            cell.backgroundColor = .clear
             cell.image = $0
         }
 

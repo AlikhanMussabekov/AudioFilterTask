@@ -10,6 +10,7 @@ import AVKit
 final class FilteredAudioPlayer {
     struct PresetConfiguration {
         static let `default` = Self()
+        private static let cache = NSCache<NSString, UIImage>()
 
         struct Distortion {
             var value: Float = -6
@@ -31,8 +32,25 @@ final class FilteredAudioPlayer {
         }
 
         func requestImage(completion: @escaping (UIImage?) -> Void) {
+            guard let emoji = emoji else {
+                completion(nil)
+                return
+            }
+
+            if let image = Self.cache.object(forKey: NSString(string: emoji)) {
+                completion(image)
+                return
+            }
+
             DispatchQueue.global(qos: .background).async {
-                let image = self.emoji?.toImage()
+                guard let image = self.emoji?.toImage() else {
+                    DispatchQueue.main.async {
+                        completion(nil)
+                    }
+                    return
+                }
+                
+                Self.cache.setObject(image, forKey: NSString(string: emoji))
                 DispatchQueue.main.async {
                     completion(image)
                 }
