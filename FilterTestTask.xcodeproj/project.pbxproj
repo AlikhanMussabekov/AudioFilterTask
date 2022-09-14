@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0762BA6D28D28A9800CADE28 /* RootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0762BA6C28D28A9800CADE28 /* RootViewController.swift */; };
 		078A2B4D28C4994A00D1AC41 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078A2B4C28C4994A00D1AC41 /* AppDelegate.swift */; };
 		078A2B5628C4994B00D1AC41 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 078A2B5528C4994B00D1AC41 /* Assets.xcassets */; };
 		078A2B5928C4994B00D1AC41 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 078A2B5728C4994B00D1AC41 /* LaunchScreen.storyboard */; };
@@ -26,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0762BA6C28D28A9800CADE28 /* RootViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewController.swift; sourceTree = "<group>"; };
 		078A2B4928C4994A00D1AC41 /* FilterTestTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FilterTestTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		078A2B4C28C4994A00D1AC41 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		078A2B5528C4994B00D1AC41 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 				078A2B6028C505E300D1AC41 /* FilterViewController.swift */,
 				07D7561F28CBC48D006DCEDA /* CameraViewController.swift */,
 				07DCBFF228CFDBE80098C030 /* PermissionViewController.swift */,
+				0762BA6C28D28A9800CADE28 /* RootViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -204,6 +207,7 @@
 				078A2B6828C56E0A00D1AC41 /* AVAsset.swift in Sources */,
 				078A2B6528C5652B00D1AC41 /* FilteredAudioPlayer.swift in Sources */,
 				07DCBFF328CFDBE80098C030 /* PermissionViewController.swift in Sources */,
+				0762BA6D28D28A9800CADE28 /* RootViewController.swift in Sources */,
 				078A2B7028C6152600D1AC41 /* ImageCollectionCell.swift in Sources */,
 				078A2B6A28C56E2800D1AC41 /* AVMutableComposition.swift in Sources */,
 				078A2B7928C6259000D1AC41 /* LoadingHUD.swift in Sources */,

@@ -28,6 +28,7 @@ final class PreviewView: UIView {
 protocol CameraViewControllerDelegate: AnyObject {
     func cameraViewControllerDidStartRecording(_ controller: CameraViewController)
     func cameraViewController(_ controller: CameraViewController, didFinishRecordingWith outputURL: URL)
+    func cameraViewController(_ controller: CameraViewController, didSelectGallery outputURL: URL)
     func cameraViewController(_ controller: CameraViewController, recordingDidFailWith error: Error)
 }
 
@@ -129,9 +130,7 @@ final class CameraViewController: UIViewController {
 
         self.previewView.session = captureSession
 
-        DispatchQueue.global(qos: .userInteractive).async {
-            self.setupCaptureSession()
-        }
+        self.setupCaptureSession()
     }
 
     override func viewDidLayoutSubviews() {
@@ -149,24 +148,21 @@ final class CameraViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard !self.captureSession.isRunning else { return }
-            self.captureSession.startRunning()
-        }
+
+        guard !self.captureSession.isRunning else { return }
+        self.captureSession.startRunning()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.captureSession.stopRunning()
-        }
+
+        self.captureSession.stopRunning()
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.captureSession.stopRunning()
-        }
+
+        self.captureSession.stopRunning()
     }
 
     private func loadLastImageThumb(size: CGSize, completion: @escaping (UIImage?) -> Void) {
@@ -362,13 +358,6 @@ final class CameraViewController: UIViewController {
         print(reason)
         self.captureSession.startRunning()
     }
-
-    private func presentFilterController(with url: URL) {
-        let mediaAsset = AVAsset(url: url)
-        let controller = FilterViewController(asset: mediaAsset)
-        let filterController = UINavigationController(rootViewController: controller)
-        self.present(filterController, animated: true)
-    }
 }
 
 extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
@@ -381,7 +370,6 @@ extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
 
         print("recording finished")
         self.delegate?.cameraViewController(self, didFinishRecordingWith: outputFileURL)
-        self.presentFilterController(with: outputFileURL)
     }
 }
 
@@ -396,7 +384,7 @@ extension CameraViewController: UIImagePickerControllerDelegate, UINavigationCon
 
         self.dismiss(animated: true) {
             if let mediaURL = info[.mediaURL] as? URL {
-                self.presentFilterController(with: mediaURL)
+                self.delegate?.cameraViewController(self, didSelectGallery: mediaURL)
             }
         }
     }

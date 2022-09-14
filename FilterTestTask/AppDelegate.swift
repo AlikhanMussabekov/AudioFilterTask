@@ -17,39 +17,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
 
         let window = UIWindow()
-
-        self.requestMediaAccess { granted in
-            DispatchQueue.main.async {
-                if granted {
-                    window.rootViewController = CameraViewController()
-                } else {
-                    window.rootViewController = PermissionViewController()
-                }
-
-                window.makeKeyAndVisible()
-                self.window = window
-            }
-        }
+        window.rootViewController = RootViewController()
+        window.makeKeyAndVisible()
+        self.window = window
 
         return true
     }
-
-    private func requestMediaAccess(completion: @escaping (Bool) -> Void) {
-        self.requestCaptureAccess(for: .video) {
-            $0 ? self.requestCaptureAccess(for: .audio) { completion($0) } : completion(false)
-        }
-    }
-
-    private func requestCaptureAccess(for mediaType: AVMediaType, completion: @escaping (Bool) -> Void) {
-        switch AVCaptureDevice.authorizationStatus(for: mediaType) {
-        case .authorized:
-            completion(true)
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: mediaType, completionHandler: completion)
-        default:
-            completion(false)
-        }
-    }
 }
-
-

@@ -210,6 +210,11 @@ final class FilteredAudioPlayer {
         }
     }
 
+    func stop() {
+        self.engine.stop()
+        self.audioPlayer.stop()
+    }
+
     func apply(preset: PresetConfiguration) {
         self.pitchControl.pitch = preset.pitch
         self.reverbControl.wetDryMix = preset.reverb

@@ -8,7 +8,14 @@
 import UIKit
 import AVKit
 
+protocol FilterViewControllerDelegate: AnyObject {
+    func filterViewControllerDidCancel(_ filterController: FilterViewController)
+    func filterViewController(_ filterController: FilterViewController, needsShare url: URL)
+}
+
 final class FilterViewController: UIViewController {
+    weak var delegate: FilterViewControllerDelegate?
+
     private let mediaAsset: AVAsset
 
     private let filteredAudioPlayer = FilteredAudioPlayer()
@@ -80,6 +87,13 @@ final class FilterViewController: UIViewController {
             origin: .init(x: 0, y: self.view.bounds.maxY - 100 - self.view.safeAreaInsets.bottom),
             size: .init(width: self.view.bounds.width, height: 100)
         )
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        self.videoLayer.player?.replaceCurrentItem(with: nil)
+        self.filteredAudioPlayer.stop()
     }
 
     // MARK: - Media rocessing
@@ -189,13 +203,12 @@ final class FilterViewController: UIViewController {
     }
 
     private func share(url: URL) {
-        let activityController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        self.present(activityController, animated: true)
+        self.delegate?.filterViewController(self, needsShare: url)
     }
 
     @objc
     private func cancelButtonDidClick() {
-        self.dismiss(animated: true)
+        self.delegate?.filterViewControllerDidCancel(self)
     }
 }
 
