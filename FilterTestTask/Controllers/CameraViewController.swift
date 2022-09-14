@@ -129,7 +129,7 @@ final class CameraViewController: UIViewController {
 
         self.previewView.session = captureSession
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInteractive).async {
             self.setupCaptureSession()
         }
     }
@@ -193,7 +193,9 @@ final class CameraViewController: UIViewController {
             options: options
         ) { image, _ in
             if let image = image {
-                completion(image)
+                DispatchQueue.main.async {
+                    completion(image)
+                }
             }
         }
     }
@@ -204,6 +206,7 @@ final class CameraViewController: UIViewController {
         picker.sourceType = .photoLibrary
         picker.mediaTypes = [kUTTypeMovie as String]
         picker.delegate = self
+        picker.allowsEditing = false
         self.present(picker, animated: true)
     }
 

@@ -91,10 +91,15 @@ final class FilteredAudioPlayer {
 
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)!
 
+    private var playingAudioFile: AVAudioFile?
+    private var filteredAudioFile: AVAudioFile?
+
+    private var renderingManually = false
+
     init() {
         self.nodes.forEach(self.engine.attach)
 
-        var previousNode = self.nodes.first! // swiftlint:disable:this force_unwrap
+        var previousNode = self.nodes.first!
         var engineNodes = self.nodes
         engineNodes.append(self.engine.mainMixerNode)
         engineNodes.removeFirst()
@@ -116,21 +121,27 @@ final class FilteredAudioPlayer {
                 forWriting: recordingConfiguration.outputURL,
                 settings: self.format.settings
             )
+            self.filteredAudioFile = filteredAudioFile
 
-            engine.mainMixerNode.installTap(
+            self.engine.mainMixerNode.installTap(
                 onBus: 0,
                 bufferSize: 4096,
                 format: self.format
             ) { [weak self] buffer, time in
-                guard let self = self else { return }
+                guard let self = self, !self.renderingManually else { return }
 
                 guard
                     let filteredAudioFileLength = filteredAudioFile?.length,
                     filteredAudioFileLength <= audioFile.length
                 else {
-                    self.engine.mainMixerNode.removeTap(onBus: 0)
-                    filteredAudioFile = nil // flush AVAudioFile(forWriting:) для m4a
-                    recordingConfiguration.completion(recordingConfiguration.outputURL)
+                    DispatchQueue.global(qos: .userInteractive).async {
+                        self.engine.mainMixerNode.removeTap(onBus: 0)
+                        filteredAudioFile = nil // flush AVAudioFile(forWriting:) для m4a
+
+                        DispatchQueue.main.async {
+                            recordingConfiguration.completion(recordingConfiguration.outputURL)
+                        }
+                    }
                     return
                 }
 
@@ -143,6 +154,60 @@ final class FilteredAudioPlayer {
         self.engine.prepare()
         try self.engine.start()
         self.audioPlayer.play()
+
+        self.playingAudioFile = audioFile
+    }
+
+    func renderManually(completion: @escaping (URL) -> Void) {
+        guard
+            let playingAudioFile = self.playingAudioFile,
+            let filteredAudioFile = self.filteredAudioFile
+        else {
+            return
+        }
+
+        self.renderingManually = true
+
+        DispatchQueue.global(qos: .userInteractive).async {
+            do {
+                self.audioPlayer.pause()
+                self.engine.stop()
+
+                try self.engine.enableManualRenderingMode(.offline, format: self.format, maximumFrameCount: 4096)
+
+                self.engine.prepare()
+                try self.engine.start()
+                self.audioPlayer.play()
+
+                let buffer = AVAudioPCMBuffer(
+                    pcmFormat: self.engine.manualRenderingFormat,
+                    frameCapacity: self.engine.manualRenderingMaximumFrameCount
+                )!
+
+                while filteredAudioFile.length < playingAudioFile.length {
+                    let frameCount = playingAudioFile.length - filteredAudioFile.length
+                    let framesToRender = min(AVAudioFrameCount(frameCount), buffer.frameCapacity)
+
+                    switch try self.engine.renderOffline(framesToRender, to: buffer) {
+                    case .success:
+                        try filteredAudioFile.write(from: buffer)
+                    default:
+                        break
+                    }
+                }
+
+                self.audioPlayer.stop()
+                self.engine.stop()
+
+                DispatchQueue.main.async {
+                    self.filteredAudioFile = nil
+                    completion(filteredAudioFile.url)
+                    self.renderingManually = false
+                }
+            } catch {
+                print(error)
+            }
+        }
     }
 
     func apply(preset: PresetConfiguration) {

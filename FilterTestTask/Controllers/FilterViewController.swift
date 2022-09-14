@@ -11,8 +11,8 @@ import AVKit
 final class FilterViewController: UIViewController {
     private let mediaAsset: AVAsset
 
-    private lazy var filteredAudioPlayer = FilteredAudioPlayer()
-    private lazy var videoLayer = AVPlayerLayer()
+    private let filteredAudioPlayer = FilteredAudioPlayer()
+    private let videoLayer = AVPlayerLayer()
     private lazy var assetExporter = AssetExporter()
     private let collectionView = ImageCollectionView()
 
@@ -135,6 +135,7 @@ final class FilterViewController: UIViewController {
     }
 
     private func finish(video: AVMutableComposition, filteredAudio url: URL) {
+        print("lifetime finished")
         let filteredAudioAsset = AVAsset(url: url)
         guard let filteredAudioAssetTrack = filteredAudioAsset.tracks(withMediaType: .audio).first else {
             return
@@ -152,33 +153,39 @@ final class FilterViewController: UIViewController {
 
     @objc
     private func shareButtonDidClick() {
-        guard let filteredMedia = filteredMedia else {
-            return
-        }
+//        guard let filteredMedia = filteredMedia else {
+//            return
+//        }
 
         LoadingHUD.show()
-
-        self.assetExporter.export(
-            asset: filteredMedia,
-            with: .init(
-                url: .temporary(fileName: "encodedVideo.mov"),
-                fileType: .mov,
-                preset: AVAssetExportPresetPassthrough
-            )
-        ) { result in
-            DispatchQueue.main.async {
-                LoadingHUD.hide()
-            }
-
-            do {
-                let filteredVideoURL = try result.get()
-                DispatchQueue.main.async {
-                    self.share(url: filteredVideoURL)
-                }
-            } catch {
-                print(error)
-            }
+        self.videoLayer.player?.pause()
+        self.filteredAudioPlayer.renderManually { url in
+            LoadingHUD.hide()
+            self.share(url: url)
+            print("manual finished")
         }
+
+//        LoadingHUD.show()
+//
+//        self.assetExporter.export(
+//            asset: filteredMedia,
+//            with: .init(
+//                url: .temporary(fileName: "encodedVideo.mov"),
+//                fileType: .mov,
+//                preset: AVAssetExportPresetPassthrough
+//            )
+//        ) { result in
+//            DispatchQueue.main.async {
+//                LoadingHUD.hide()
+//
+//                do {
+//                    let filteredVideoURL = try result.get()
+//                    self.share(url: filteredVideoURL)
+//                } catch {
+//                    print(error)
+//                }
+//            }
+//        }
     }
 
     private func share(url: URL) {
